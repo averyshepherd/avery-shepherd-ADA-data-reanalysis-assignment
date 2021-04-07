@@ -1,0 +1,87 @@
+---
+title: "Data Analysis Replication"
+author: "Avery Shepherd"
+date: "4/7/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = TRUE,
+	message = TRUE,
+	comment = "##",
+	prompt = FALSE,
+	tidy = TRUE,
+	tidy.opts = list(blank = FALSE, width.cutoff = 75),
+	fig.path = "img/",
+	fig.align = "center"
+)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Introduction
+
+[Include a summary of the paper you are reanalyzing data from]
+
+## Visualization of Data
+```{r}
+mydata <- haven::read_dta("election_panel_2008_2016.dta")
+mydata %>% arrange(state) %>% head()
+```
+
+
+
+```{r}
+hist2012 <- mydata %>% filter(year == 2012) %>%
+  ggplot(aes(x = pctic_0400, 
+             after_stat(density), 
+             group = expansion, 
+             fill = factor(expansion), 
+             color = factor(expansion))) + 
+  geom_histogram(position="identity", bins = 40) + 
+  scale_color_manual(values=c("darkorange1", "deepskyblue4"), labels = c("Non-Expansion", "Expansion")) + 
+  scale_fill_manual(values=c("orange1", "#E69F0000"), labels = c("Non-Expansion", "Expansion")) + 
+  xlim(40, 100) + 
+  ylim(0, .15) + 
+  xlab("Insurance Rate [0-100]") +
+  ggtitle("2012") +
+  theme(legend.title = element_blank())
+
+
+hist2016 <- mydata %>% filter(year == 2016) %>%
+  ggplot(aes(x = pctic_0400, 
+             after_stat(density), 
+             group = expansion, 
+             fill = factor(expansion), 
+             color = factor(expansion))) + 
+  geom_histogram(position="identity", bins = 55) + 
+  scale_color_manual(values=c("darkorange1", "deepskyblue4"), labels = c("Non-Expansion", "Expansion")) + 
+  scale_fill_manual(values=c("orange1", "#E69F0000"), labels = c("Non-Expansion", "Expansion")) + 
+  xlim(40, 100) + 
+  ylim(0, .15) + 
+  xlab("Insurance Rate [0-100]") +
+  ggtitle("2016") +
+  theme(legend.title = element_blank())
+
+  
+  
+
+cowplot::plot_grid(hist2012, 
+                   hist2016, 
+                   nrow = 2, 
+                   labels = c("A", "B"))
+```
+
+## Replications/Reanalysis
+
+[Be sure to explain what replications you are doing and comment your code so that it is easy for a reader to understand. Include in this section relevant tables/figures/values from the original paper for comparison to what you accomplished with your replication.]
+
+## Summary/Discussion
+
+[How successful were you at replicating the analyses and visualizations in the study? What problems did you encounter? Why might you have encountered those problems? What details were lacking from the original study's methods that might have hampered your ability to replicate the authors' results?]
+
+## References

@@ -78,7 +78,83 @@ cowplot::plot_grid(hist2012,
 
 ## Replications/Reanalysis
 
-[Be sure to explain what replications you are doing and comment your code so that it is easy for a reader to understand. Include in this section relevant tables/figures/values from the original paper for comparison to what you accomplished with your replication.]
+```{r}
+results <- data.frame()
+
+vars <- c("voteshare_dem", 
+          "voteshare_gop", 
+          "voteshare_oth", 
+          "turnout",
+          "pctic_0400",
+          "unemp_rate_cty",
+          "percent_in_poverty",
+          "perc_black",
+          "perc_native",
+          "perc_asian",
+          "perc_hisp",
+          "median_income",
+          "dem_campaign_spending_gap",
+          "total_campaign_spending",
+          "pop_den_100k")
+
+for(var in vars) {
+  tmp <- mydata %>%
+    mutate(applied = mydata[[var]]) %>%
+    filter(!is.na(pop_total)) %>%
+    filter(!is.na(applied)) %>%
+    group_by(year) %>%
+    summarise(mean = weighted.mean(applied, pop_total))
+  y08 <- filter(tmp, year == 2008)$mean
+  y12 <- filter(tmp, year == 2012)$mean
+  y16 <- filter(tmp, year == 2016)$mean
+  p0812 <- mydata  %>% filter(year == 2008 | year == 2012) %>% mutate(applied = .[[var]]) %>% lm(applied ~ year, data = ., weights = pop_total) %>% summary %>% coef  %>% .["year", "Pr(>|t|)"]
+  p1216 <- mydata  %>% filter(year == 2012 | year == 2016) %>% mutate(applied = .[[var]]) %>% lm(applied ~ year, data = ., weights = pop_total) %>% summary %>% coef %>% .["year", "Pr(>|t|)"]
+  tmp <- data.frame(var, y08, y12, y16, y12-y08, y16-y12, p0812, p1216)
+  results <- rbind(results, tmp)
+}
+
+
+results$y08 <- round(results$y08, digits = 2)
+results$y12 <- round(results$y12, digits = 2)
+results$y16 <- round(results$y16, digits = 2)
+results$y12...y08 <- round(results$y12...y08, digits = 2)
+results$y16...y12 <- round(results$y16...y12, digits = 2)
+
+
+for (i in 1:15) {
+  y12...y08 <- as.character(results[i, "y12...y08"])
+  if (results[i, "p0812"] < 0.01) {
+    y12...y08 <- paste(y12...y08, "***")
+  } else if (results[i, "p0812"] < 0.05) {
+      y12...y08 <-paste(y12...y08, "**")
+  } else if (results[i, "p0812"] < 0.1) {
+      y12...y08 <- paste(y12...y08, "*")
+  }
+  results[i, "y12...y08"] <- y12...y08
+}
+
+for (i in 1:15) {
+  y16...y12 <- as.character(results[i, "y16...y12"])
+  if (results[i, "p1216"] < 0.01) {
+    y16...y12 <- paste(y16...y12, "***")
+  } else if (results[i, "p1216"] < 0.05) {
+      y16...y12 <-paste(y16...y12, "**")
+  } else if (results[i, "p1216"] < 0.1) {
+      y16...y12 <- paste(y16...y12, "*")
+  }
+  results[i, "y16...y12"] <- y16...y12
+}
+
+
+library(kableExtra)
+library(knitr)
+results %>% select(-p0812, -p1216) %>% kable(col.names = c("Variable", "2008", "2012", "2016", "2008–12 Difference", "2012–16 Difference"), type = "html") %>%
+  kable_styling() %>%
+  column_spec(column = c(5, 6),bold=T)
+detach(package:kableExtra)
+detach(package:knitr)
+```
+
 
 ## Summary/Discussion
 

@@ -156,6 +156,152 @@ detach(package:knitr)
 ```
 
 
+```{r}
+library(estimatr)
+demlm <- lm_robust(voteshare_dem ~ pctic_0400 + 
+                      unemp_rate_cty +
+                      percent_in_poverty +
+                      perc_black +
+                      perc_native +
+                      perc_asian +
+                      perc_hisp +
+                      median_income +
+                      dem_campaign_spending_gap +
+                      total_campaign_spending +
+                      pop_den_100k, 
+          data = mydata,
+          weights = pop_total,
+          clusters = state,
+          fixed_effects = ~ year + combined_fips,
+          `se_type` = "CR0")
+goplm <- lm_robust(voteshare_gop ~ pctic_0400 + 
+                      unemp_rate_cty +
+                      percent_in_poverty +
+                      perc_black +
+                      perc_native +
+                      perc_asian +
+                      perc_hisp +
+                      median_income +
+                      dem_campaign_spending_gap +
+                      total_campaign_spending +
+                      pop_den_100k, 
+          data = mydata,
+          weights = pop_total,
+          clusters = state,
+          fixed_effects = ~ year + combined_fips,
+          `se_type` = "CR0")
+othlm <- lm_robust(voteshare_oth ~ pctic_0400 + 
+                      unemp_rate_cty +
+                      percent_in_poverty +
+                      perc_black +
+                      perc_native +
+                      perc_asian +
+                      perc_hisp +
+                      median_income +
+                      dem_campaign_spending_gap +
+                      total_campaign_spending +
+                      pop_den_100k, 
+          data = mydata,
+          weights = pop_total,
+          clusters = state,
+          fixed_effects = ~ year + combined_fips,
+          `se_type` = "CR0")
+
+turnlm <- lm_robust(turnout ~ pctic_0400 + 
+                      unemp_rate_cty +
+                      percent_in_poverty +
+                      perc_black +
+                      perc_native +
+                      perc_asian +
+                      perc_hisp +
+                      median_income +
+                      dem_campaign_spending_gap +
+                      total_campaign_spending +
+                      pop_den_100k, 
+          data = mydata,
+          weights = pop_total,
+          clusters = state,
+          fixed_effects = ~ year + combined_fips,
+          `se_type` = "CR0")
+
+
+results <- data.frame()
+results <- rbind(results, data.frame(estoth = summary(othlm)$coefficients[,"Estimate"],
+                                     erroth = summary(othlm)$coefficients[,"Std. Error"],
+                                     pvaloth = summary(othlm)$coefficients[,"Pr(>|t|)"],
+                                     vars = rownames(summary(othlm)$coefficients)))
+results <- cbind(results, data.frame(estgop = summary(goplm)$coefficients[,"Estimate"],
+                                     errgop = summary(goplm)$coefficients[,"Std. Error"],
+                                     pvalgop = summary(goplm)$coefficients[,"Pr(>|t|)"]))
+results <- cbind(results, data.frame(estdem = summary(demlm)$coefficients[,"Estimate"],
+                                     errdem = summary(demlm)$coefficients[,"Std. Error"],
+                                     pvaldem = summary(demlm)$coefficients[,"Pr(>|t|)"]))
+results <- cbind(results, data.frame(estturn = summary(turnlm)$coefficients[,"Estimate"],
+                                     errturn = summary(turnlm)$coefficients[,"Std. Error"],
+                                     pvalturn = summary(turnlm)$coefficients[,"Pr(>|t|)"]))
+
+
+results[,-4] <- round(results[,-4], digits = 2)
+
+for (i in 1:11) {
+  est <- as.character(results[i, "estoth"])
+    if (results[i, "pvaloth"] < 0.01) {
+    est <- paste(est, "***")
+  } else if (results[i, "pvaloth"] < 0.05) {
+      est <-paste(est, "**")
+  } else if (results[i, "pvaloth"] < 0.1) {
+      est <- paste(est, "*")
+  }
+  est <- paste0(est, "<br>", "(", as.character(results[i, "erroth"]), ")")
+  results[i, "Other Party Vote Share"] <- est
+}
+
+for (i in 1:11) {
+  est <- as.character(results[i, "estdem"])
+    if (results[i, "pvaldem"] < 0.01) {
+    est <- paste(est, "***")
+  } else if (results[i, "pvaldem"] < 0.05) {
+      est <-paste(est, "**")
+  } else if (results[i, "pvaldem"] < 0.1) {
+      est <- paste(est, "*")
+  }
+  est <- paste0(est, "<br>", "(", as.character(results[i, "errdem"]), ")")
+  results[i, "Democratic Party Vote Share"] <- est
+}
+
+for (i in 1:11) {
+  est <- as.character(results[i, "estgop"])
+    if (results[i, "pvalgop"] < 0.01) {
+    est <- paste(est, "***")
+  } else if (results[i, "pvalgop"] < 0.05) {
+      est <-paste(est, "**")
+  } else if (results[i, "pvalgop"] < 0.1) {
+      est <- paste(est, "*")
+  }
+  est <- paste0(est, "<br>", "(", as.character(results[i, "errgop"]), ")")
+  results[i, "GOP Party Vote Share"] <- est
+}
+
+for (i in 1:11) {
+  est <- as.character(results[i, "estturn"])
+    if (results[i, "pvalturn"] < 0.01) {
+    est <- paste(est, "***")
+  } else if (results[i, "pvalturn"] < 0.05) {
+      est <-paste(est, "**")
+  } else if (results[i, "pvalturn"] < 0.1) {
+      est <- paste(est, "*")
+  }
+  est <- paste0(est, "<br>", "(", as.character(results[i, "errturn"]), ")")
+  results[i, "Voter Turnout"] <- est
+}
+
+
+library(kableExtra)
+results %>% select("Democratic Party Vote Share", "GOP Party Vote Share", "Other Party Vote Share", "Voter Turnout") %>% knitr::kable("html", escape = F) %>% kable_styling()
+
+```
+
+
 ## Summary/Discussion
 
 [How successful were you at replicating the analyses and visualizations in the study? What problems did you encounter? Why might you have encountered those problems? What details were lacking from the original study's methods that might have hampered your ability to replicate the authors' results?]
